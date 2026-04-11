@@ -3,6 +3,8 @@ import unittest
 
 # We import our own classes so we can create objects to test.
 from textnode import TextNode, TextType, text_node_to_html_node
+from split_delimiter import split_nodes_delimiter
+
 
 
 
@@ -71,6 +73,15 @@ class TestTextNode(unittest.TestCase):
         html_node = text_node_to_html_node(node)
         self.assertEqual(html_node.tag, "img")
         self.assertEqual(html_node.props, {"src": "https://www.google.com/image.jpg", "alt": "Alt text"})
+
+def test_split_delimiter(self):
+    node = TextNode("This is `code` and more `code`", TextType.TEXT)
+    new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+    # You should get 4 nodes back: Text, Code, Text, Code
+    self.assertEqual(len(new_nodes), 4)
+    self.assertEqual(new_nodes[1].text, "code")
+    self.assertEqual(new_nodes[1].text_type, TextType.CODE)
+
 
   
 
