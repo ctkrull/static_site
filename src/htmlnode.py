@@ -8,9 +8,22 @@ class HTMLNode:
         self.props = props       # A dictionary of attributes like {"href": "url"}
 
     def to_html(self):
-        # We haven't built this yet! This is a "placeholder" that
-        # reminds us (or other devs) that child classes MUST define this.
-        raise NotImplementedError("child classes must implement to_html method")
+    # 1. Error handling (Step 3.1 and 3.2)
+        if self.tag is None:
+            raise ValueError("Invalid HTML: no tag")
+        if self.children is None:
+            raise ValueError("Invalid HTML: no children")
+
+        # 2. The gathering phase
+        children_html = ""
+        for child in self.children:
+            # We call to_html() on the child. 
+            # We don't care if the child is a Leaf or another Parent!
+            children_html += child.to_html()
+
+        # 3. The final sandwich
+        # We wrap all that gathered children HTML in our own tags
+        return f"<{self.tag}{self.props_to_html()}>{children_html}</{self.tag}>"
 
     def props_to_html(self):
         # If there are no attributes, we return an empty string
@@ -52,6 +65,11 @@ class LeafNode(HTMLNode):
         # We need to return a string that looks like HTML: <tag props>value</tag>
         # We use your props_to_html() method from the parent class here.
         return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
+
+class ParentNode(HTMLNode):
+    def __init__(self, tag, children, props=None):
+        # A ParentNode always has 'None' for value, because it contains other nodes.
+        super().__init__(tag, None, children, props)        
 
     def __repr__(self):
         # The assignment asks for this to be similar to HTMLNode 

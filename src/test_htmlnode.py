@@ -1,5 +1,5 @@
 import unittest
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 class TestHTMLNode(unittest.TestCase):
     def test_props_to_html(self):
@@ -44,6 +44,52 @@ class TestHTMLNode(unittest.TestCase):
         # This checks if the props (the dictionary) get added correctly.
         node = LeafNode("a", "Click me!", {"href": "https://www.google.com"})
         self.assertEqual(node.to_html(), '<a href="https://www.google.com">Click me!</a>')
+
+    def test_parent_to_html(self):
+        # This checks if the parent node renders correctly with its children
+        child1 = LeafNode("p", "First paragraph")
+        child2 = LeafNode("p", "Second paragraph")
+        node = ParentNode("div", [child1, child2])
+        self.assertEqual(node.to_html(), "<div><p>First paragraph</p><p>Second paragraph</p></div>")
+
+    def test_to_html_with_children(self):
+        child_node = LeafNode("span", "child")
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(parent_node.to_html(), "<div><span>child</span></div>")
+
+    def test_to_html_with_grandchildren(self):
+        grandchild_node = LeafNode("b", "grandchild")
+        child_node = ParentNode("span", [grandchild_node])
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(parent_node.to_html(),"<div><span><b>grandchild</b></span></div>",
+        )
+
+    def test_to_html_with_props(self):
+        child_node = LeafNode("a", "Google", {"href": "https://www.google.com"})
+        parent_node = ParentNode("div", [child_node], {"class": "container"})
+        self.assertEqual(parent_node.to_html(), '<div class="container"><a href="https://www.google.com">Google</a></div>',
+        )
+
+    def test_to_html_with_empty_children(self):
+        parent_node = ParentNode("div", [])
+        self.assertEqual(parent_node.to_html(), "<div></div>")  
+
+    def test_to_html_with_none_children(self):
+        parent_node = ParentNode("div", None)
+        with self.assertRaises(ValueError):
+            parent_node.to_html()  
+
+    def test_to_html_with_none_tag(self):
+        with self.assertRaises(ValueError):
+            ParentNode(None, []).to_html()
+
+    def test_leaf_to_html_with_none_value(self):
+        with self.assertRaises(ValueError):
+            LeafNode("p", None).to_html()
+
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
