@@ -7,7 +7,7 @@ from text_textnode import text_to_textnodes
 from split_delimiter import split_nodes_delimiter
 from extract_markdown import extract_markdown_images, extract_markdown_links
 from split_nodes import split_nodes_image, split_nodes_link
-
+from block import markdown_to_blocks, BlockType, block_to_block_type
 
 
 
@@ -192,43 +192,64 @@ class TestTextNode(unittest.TestCase):
             new_nodes,
         )
 
-    # def test_split_links_and_images_with_code(self):
-    #     node = TextNode(
-    #         "This is text with a [link](https://www.google.com), an ![image](https://i.imgur.com/zjjcJKZ.png), and some `code`",
-    #         TextType.TEXT,)
-    #     new_nodes = split_nodes_image(split_nodes_link(split_nodes_delimiter([node], "`", TextType.CODE)))
-    #     self.assertListEqual(
-    #         [
-    #             TextNode("This is text with a ", TextType.TEXT),
-    #             TextNode("link", TextType.LINK, "https://www.google.com"),
-    #             TextNode(", an ", TextType.TEXT),
-    #             TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
-    #             TextNode(", and some ", TextType.TEXT),
-    #             TextNode("code", TextType.CODE),
-    #         ],
-    #         new_nodes,
-    #     )
+    def test_markdown_to_blocks(self):
+        md = """
+This is **bolded** paragraph
 
-    # def test_split_links_and_images_with_code_reversed(self):
-    #     node = TextNode(
-    #         "This is text with some `code`, an ![image](https://i.imgur.com/zjjcJKZ.png), and a [link](https://www.google.com)",
-    #         TextType.TEXT,)
-    #     new_nodes = split_nodes_link(split_nodes_image(split_nodes_delimiter([node], "`", TextType.CODE)))
-    #     self.assertListEqual(
-    #         [
-    #             TextNode("This is text with some ", TextType.TEXT),
-    #             TextNode("code", TextType.CODE),
-    #             TextNode(", an ", TextType.TEXT),
-    #             TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
-    #             TextNode(", and a ", TextType.TEXT),
-    #             TextNode("link", TextType.LINK, "https://www.google.com"),
-    #         ],
-    #         new_nodes,
-    #     )
-    
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        ) 
 
 
-# This line tells Python: "If I run this file directly (not just importing it), 
+    def test_markdown_to_blocks_with_images_and_links(self):
+        md = """
+
+This is a paragraph with an ![image](https://i.imgur.com/zjjcJKZ.png) and a [link](https://www.google.com)"""
+
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is a paragraph with an ![image](https://i.imgur.com/zjjcJKZ.png) and a [link](https://www.google.com)"
+            ],
+        )
+
+def test_block_to_block_types(self):
+        # 1. Heading (must have space after #)
+        self.assertEqual(block_to_block_type("# heading"), BlockType.HEADING)
+        self.assertEqual(block_to_block_type("###### heading"), BlockType.HEADING)
+        # Should be paragraph because no space
+        self.assertEqual(block_to_block_type("#heading"), BlockType.PARAGRAPH)
+
+        # 2. Code
+        self.assertEqual(block_to_block_type("```\ncode\n```"), BlockType.CODE)
+
+        # 3. Quote (All lines must start with >)
+        self.assertEqual(block_to_block_type("> quote\n> more quote"), BlockType.QUOTE)
+        
+        # 4. Unordered List (All lines must start with - or *)
+        self.assertEqual(block_to_block_type("- item 1\n- item 2"), BlockType.UNORDERED_LIST)
+        self.assertEqual(block_to_block_type("* item 1\n* item 2"), BlockType.UNORDERED_LIST)
+
+        # 5. Ordered List (Must increment!)
+        self.assertEqual(block_to_block_type("1. first\n2. second"), BlockType.ORDERED_LIST)
+        # Should be paragraph because it skips a number
+        self.assertEqual(block_to_block_type("1. first\n3. third"), BlockType.PARAGRAPH)
+
+        # 6. Paragraph
+        self.assertEqual(block_to_block_type("Just a normal paragraph"), BlockType.PARAGRAPH)# This line tells Python: "If I run this file directly (not just importing it), 
 # then go ahead and execute all the tests defined above."
 if __name__ == "__main__":
     unittest.main()
