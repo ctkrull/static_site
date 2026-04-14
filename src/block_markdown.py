@@ -77,3 +77,17 @@ def markdown_to_blocks(markdown):
 
 
     return filtered_blocks
+
+def block_to_html_node(block):
+    block_type = block_to_block_type(block)
+    if block_type == BlockType.QUOTE:
+        return quote_to_node(block)
+    if block_type == BlockType.UNORDERED_LIST:
+        return ul_to_node(block)
+    if block_type == BlockType.ORDERED_LIST:
+        return ol_to_node(block)
+    if block_type == BlockType.CODE:
+        return code_to_node(block)
+    if block_type == BlockType.HEADING:
+        return heading_to_node(block)
+    return paragraph_to_node(block)
