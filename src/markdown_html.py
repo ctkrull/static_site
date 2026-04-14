@@ -1,6 +1,8 @@
 from htmlnode import ParentNode, LeafNode  # To build the HTML objects
 from textnode import TextNode, TextType    # To handle the text inside blocks
 from inline_markdown import text_to_textnodes # To break down bold/italic/links/images
+from block_markdown import markdown_to_blocks, block_to_html_node
+from text_to_children import text_to_children
 
 
 def markdown_text_to_html_node(markdown_text):
@@ -31,3 +33,7 @@ def heading_to_html_node(block):
     text = block[level + 1:]
     children = text_to_children(text)
     return ParentNode(f"h{level}", children)
+
+
+def markdown_to_html_node(markdown_text):
+    return markdown_text_to_html_node(markdown_text)

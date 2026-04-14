@@ -55,17 +55,18 @@ class LeafNode(HTMLNode):
         super().__init__(tag, value, None, props)
 
     def to_html(self):
-        # 1. This is correct! We can't have an empty leaf.
+        # 1. This is correct! If there is no value, the node may still be an
+        #    empty self-closing tag like <img />.
         if self.value is None:
+            if self.tag in {"img", "br", "hr", "input", "meta", "link"}:
+                return f"<{self.tag}{self.props_to_html()} />"
             raise ValueError("Invalid HTML: no value")
         
         # 2. This is also correct! If there's no tag, it's just raw text.
         if self.tag is None:
             return self.value
         
-        # 3. HERE is the fix: 
-        # We need to return a string that looks like HTML: <tag props>value</tag>
-        # We use your props_to_html() method from the parent class here.
+        # 3. Return the HTML text for a normal inline/leaf node.
         return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
 
 class ParentNode(HTMLNode):

@@ -5,7 +5,7 @@ import unittest
 from textnode import TextNode, TextType, text_node_to_html_node
 from block_markdown import markdown_to_blocks, BlockType, block_to_block_type, block_to_html_node, markdown_text_to_html_node, paragraph_to_html_node, heading_to_html_node, text_to_children, quote_to_node, ul_to_node, ol_to_node, code_to_node
 from inline_markdown import text_to_textnodes, split_nodes_image, split_nodes_link, extract_markdown_images, extract_markdown_links, split_nodes_delimiter
-from markdown_html import markdown_text_to_html_node, paragraph_to_html_node, heading_to_html_node
+from markdown_html import markdown_text_to_html_node, markdown_to_html_node, paragraph_to_html_node, heading_to_html_node
 from text_to_children import text_to_children   
 
 

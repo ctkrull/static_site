@@ -1,4 +1,6 @@
 from htmlnode import HTMLNode, LeafNode
+from inline_markdown import text_to_textnodes
+from textnode import text_node_to_html_node
 
 def text_to_children(text):
     # 1. Convert the raw string into a list of TextNodes 

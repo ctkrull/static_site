@@ -97,6 +97,7 @@ def text_to_textnodes(text):
     # 2) Parse bold text before italic text.
     nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
     nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
 
     # 3) Parse markdown images and links from remaining plain TEXT nodes.
     nodes = split_nodes_image(nodes)
