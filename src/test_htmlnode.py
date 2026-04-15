@@ -1,5 +1,6 @@
 import unittest
 from htmlnode import HTMLNode, LeafNode, ParentNode
+from copystatic import generate_page
 
 class TestHTMLNode(unittest.TestCase):
     def test_props_to_html(self):
@@ -86,6 +87,11 @@ class TestHTMLNode(unittest.TestCase):
     def test_leaf_to_html_with_none_value(self):
         with self.assertRaises(ValueError):
             LeafNode("p", None).to_html()
+
+    def test_generate_page(self):
+        # This is a very basic test to check if the generate_page function can run without errors.
+        # It doesn't check the actual output file, but it ensures that the function can process markdown and template without crashing.
+        generate_page("test_content.md", "test_template.html", "test_output.html")
 
 
 

@@ -3,10 +3,11 @@ import unittest
 
 # We import our own classes so we can create objects to test.
 from textnode import TextNode, TextType, text_node_to_html_node
-from block_markdown import markdown_to_blocks, BlockType, block_to_block_type, block_to_html_node, markdown_text_to_html_node, paragraph_to_html_node, heading_to_html_node, text_to_children, quote_to_node, ul_to_node, ol_to_node, code_to_node
+from block_markdown import markdown_to_blocks, BlockType, block_to_block_type, block_to_html_node, markdown_text_to_html_node, paragraph_to_html_node, heading_to_html_node, text_to_children, quote_to_node, ul_to_node, ol_to_node, code_to_node, extract_title
 from inline_markdown import text_to_textnodes, split_nodes_image, split_nodes_link, extract_markdown_images, extract_markdown_links, split_nodes_delimiter
 from markdown_html import markdown_text_to_html_node, markdown_to_html_node, paragraph_to_html_node, heading_to_html_node
-from text_to_children import text_to_children   
+from text_to_children import text_to_children  
+from copystatic import generate_page
 
 
 class TestTextNode(unittest.TestCase):
@@ -280,6 +281,64 @@ the **same** even with inline stuff
             html,
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
         )
+
+    def test_extract_title(self):
+        md ="""
+# This is the title
+"""
+        title = extract_title(md)
+        self.assertEqual(title, "This is the title")  
+
+    def test_extract_title_no_title(self):
+        md ="""
+This is a markdown file without a title.
+"""
+        self.assertRaises(Exception)
+
+    def test_markdown_to_html_node(self):
+        md = """
+# This is a heading"
+"""
+        node = markdown_text_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, "<div><h1>This is a heading</h1></div>")
+
+    def test_headings(self):
+        md = """
+# h1
+## h2 
+### h3
+"""
+        node = markdown_text_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual("<h1>h1</h1>", html)
+        self.assertEqual("<h2>h2</h2>", html)
+        self.assertEqual("<h3>h3</h3>", html)
+
+    def test_blockquote(self):
+        md = """
+> This is a
+> quote block
+"""
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        # Ensure there are no stray '>' or double spaces
+        self.assertIn("<blockquote>This is a quote block</blockquote>", html)
+
+    def test_unordered_list(self):
+        md = """
+- Item 1
+- Item 2
+"""
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertIn("<ul><li>Item 1</li><li>Item 2</li></ul>", html)
+
+    def test_content(self):
+        # This is a very basic test to check if the generate_page function can run without errors.
+        # It doesn't check the actual output file, but it ensures that the function can process markdown and template without crashing.
+        generate_page("test_content.md", "test_template.html", "test_output.html"   )
+
 
 
 

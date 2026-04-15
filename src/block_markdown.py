@@ -15,26 +15,46 @@ class BlockType(Enum):
     ORDERED_LIST = "ordered_list"
 
 def block_to_block_type(block):
-    # This function takes a block of text and determines its type based on markdown syntax.
+    lines = block.split("\n")
+
+    # Heading check (unchanged, this is usually fine)
     if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
         return BlockType.HEADING
-    elif block.startswith("```"):
+
+    # Code check (Must start AND end with ```)
+    if len(lines) > 1 and lines[0].startswith("```") and lines[-1].startswith("```"):
         return BlockType.CODE
-    elif block.startswith("> "):
-        return BlockType.QUOTE
-    elif block.startswith(("- ", "* ")):
-        return BlockType.UNORDERED_LIST
-    elif block[0].isdigit() and block[1:3] == ". ":
-        lines = block.splitlines()
-        expected = 1
+
+    # Quote check (EVERY line must start with >)
+    if block.startswith(">"):
         for line in lines:
-            if line.startswith(f"{expected}. "):
-                expected += 1
-            else:
+            if not line.startswith(">"):
                 return BlockType.PARAGRAPH
+        return BlockType.QUOTE
+
+    # Unordered List check (EVERY line must start with - or *)
+    if block.startswith("- "):
+        for line in lines:
+            if not line.startswith("- "):
+                return BlockType.PARAGRAPH
+        return BlockType.UNORDERED_LIST
+    
+    if block.startswith("* "):
+        for line in lines:
+            if not line.startswith("* "):
+                return BlockType.PARAGRAPH
+        return BlockType.UNORDERED_LIST
+
+    # Ordered List check (Correct, but ensure it starts at 1)
+    if block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if not line.startswith(f"{i}. "):
+                return BlockType.PARAGRAPH
+            i += 1
         return BlockType.ORDERED_LIST
-    else:
-        return BlockType.PARAGRAPH
+
+    return BlockType.PARAGRAPH
 
 
 def markdown_text_to_html_node(markdown_text):
@@ -61,32 +81,42 @@ def heading_to_html_node(block):
             level += 1
         else:
             break
-    # Get text after the hashes and the space
-    text = block[level + 1:]
+    
+    # Using block.lstrip("#").strip() is the safest way to get the clean text
+    text = block.lstrip("#").strip()
     children = text_to_children(text)
     return ParentNode(f"h{level}", children)
 
-# Aliases for the block_to_html_node helper names used in tests.
-paragraph_to_node = paragraph_to_html_node
-heading_to_node = heading_to_html_node
 
 
 def quote_to_node(block):
-    lines = [line[2:] if line.startswith("> ") else line for line in block.splitlines()]
-    quote_text = "\n".join(lines)
-    children = text_to_children(quote_text)
+    # 1. Clean the block: remove '>' from each line and strip whitespace
+    lines = block.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        if line.strip() == ">": # Handles empty quote lines
+            continue
+        cleaned_lines.append(line.lstrip(">").strip())
+    
+    # 2. Join with a single space to avoid double-spacing
+    content = " ".join(cleaned_lines)
+    
+    # 3. Use your text_to_children to handle the bold/italic/etc inside
+    children = text_to_children(content)
+    
+    # 4. Return the ParentNode
     return ParentNode("blockquote", children)
-
 
 def ul_to_node(block):
     items = []
     for line in block.splitlines():
-        if line.startswith("- ") or line.startswith("* "):
-            item_text = line[2:]
-        else:
-            item_text = line
+        item_text = line[2:].strip()
         item_children = text_to_children(item_text)
-        items.append(ParentNode("li", item_children))
+        
+        # FILTER: Only keep children that are NOT None
+        valid_children = [child for child in item_children if child is not None]
+        
+        items.append(ParentNode("li", valid_children))
     return ParentNode("ul", items)
 
 
@@ -97,7 +127,7 @@ def ol_to_node(block):
         if len(parts) == 2 and parts[0].isdigit():
             item_text = parts[1]
         else:
-            item_text = line
+            item_text = parts[1].strip()
         item_children = text_to_children(item_text)
         items.append(ParentNode("li", item_children))
     return ParentNode("ol", items)
@@ -113,23 +143,13 @@ def code_to_node(block):
 
 
 def markdown_to_blocks(markdown):
-    """Convert markdown text into a list of Block objects.
-
-    The function should:
-    1) Split the text into paragraphs by newlines.
-
-    """
-
-
-    blocks = markdown.split('\n\n')
+    # This MUST be two newlines
+    blocks = markdown.split("\n\n")
     filtered_blocks = []
-    
     for block in blocks:
-        block = block.strip()
-        if block != "":
-            filtered_blocks.append(block)
-
-
+        if block.strip() == "":
+            continue
+        filtered_blocks.append(block.strip())
     return filtered_blocks
 
 def block_to_html_node(block):
@@ -143,5 +163,17 @@ def block_to_html_node(block):
     if block_type == BlockType.CODE:
         return code_to_node(block)
     if block_type == BlockType.HEADING:
-        return heading_to_node(block)
-    return paragraph_to_node(block)
+        return heading_to_html_node(block)
+    return paragraph_to_html_node(block)
+
+def extract_title(markdown):
+    """Create an extract_title(markdown) function.
+It should pull the h1 header from the markdown file (the line that starts with a single #) and return it.
+If there is no h1 header, raise an exception.
+extract_title("# Hello") should return "Hello" (strip the # and any leading or trailing whitespace)."""
+
+    blocks = markdown_to_blocks(markdown)
+    for block in blocks:
+        if block.startswith("# "):
+            return block[2:].strip()
+    raise Exception("All pages need a h1 header")
