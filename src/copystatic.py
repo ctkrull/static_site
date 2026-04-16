@@ -24,7 +24,7 @@ def copy_static_recursive(source, dest):
 
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath="/"):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     
     with open(from_path, "r") as f:
@@ -32,16 +32,18 @@ def generate_page(from_path, template_path, dest_path):
     with open(template_path, "r") as f:
         template = f.read()
 
-    # 1. Get the ParentNode (the "div" wrapper)
     node = markdown_to_html_node(markdown_content)
-    
-    # 2. Extract ONLY the children's HTML (unwrapping the div)
-    html_content = ""
     html_content = "".join([child.to_html() for child in node.children])
-
     title = extract_title(markdown_content)
 
-    full_html = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
+    # STEP 1: Insert your content into the template placeholders
+    # This is what fixes the "{{ Content }}" issue in your screenshot!
+    full_html = template.replace("{{ Title }}", title)
+    full_html = full_html.replace("{{ Content }}", html_content)
+
+    # STEP 2: Handle the basepath for GitHub Pages
+    full_html = full_html.replace('href="/', f'href="{basepath}')
+    full_html = full_html.replace('src="/', f'src="{basepath}')
 
     dest_dir = os.path.dirname(dest_path)
     if dest_dir != "":
@@ -50,9 +52,8 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, "w") as f:
         f.write(full_html)
 
-import os
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath="/"):
     for filename in os.listdir(dir_path_content):
         from_path = os.path.join(dir_path_content, filename)
         dest_path = os.path.join(dest_dir_path, filename)
@@ -61,11 +62,11 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
             if filename.endswith(".md"):
                 # Ensure the destination is an .html file
                 dest_file_path = dest_path.replace(".md", ".html")
-                generate_page(from_path, template_path, dest_file_path)
+                generate_page(from_path, template_path, dest_file_path, basepath)
         else:
             # It's a directory! 
             # 1. Create the directory in 'public' so the files have a home
             os.makedirs(dest_path, exist_ok=True)
             # 2. Recurse into it
-            generate_pages_recursive(from_path, template_path, dest_path)
+            generate_pages_recursive(from_path, template_path, dest_path, basepath)
 
