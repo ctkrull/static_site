@@ -24,7 +24,7 @@ def main():
     copy_static_recursive(source_path, dest_path)
 
     #Update main.py: after copying files from static to public, it should generate a page from content/index.md using template.html and write it to public/index.html.
-    generate_pages_recursive("content", "template.html", "public", basepath)
+    generate_pages_recursive("content", "template.html", dest_path, basepath)
 
     #Update your main.sh script to start a simple web server after generating the site. Use the same built-in Python server as before: by adding the following lines to the end of main.sh:
     # print("Starting web server at http://localhost:8000...")
